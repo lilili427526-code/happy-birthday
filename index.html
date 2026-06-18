@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Birthday Surprise 🎁</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Marker Felt', '微软雅黑', sans-serif;
+        }
+
+        body {
+            background: #fff;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            cursor: pointer;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+            padding: 20px;
+            text-align: center;
+            will-change: opacity;
+        }
+
+        .page.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .text-animate {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeSlideUp 1s ease forwards;
+        }
+
+        @keyframes fadeSlideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .circle-dot {
+            position: absolute;
+            border-radius: 50%;
+            animation: circleScaleFade 2s ease-out forwards;
+        }
+
+        .smiley {
+            display: inline-block;
+            transform-origin: center center;
+            animation: fallDown 0.6s ease forwards;
+            color: #4B81AB;
+        }
+
+        @keyframes fallDown {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(90deg); }
+        }
+
+        @keyframes circleScaleFade {
+            0% { transform: scale(0); opacity: 0.8; }
+            100% { transform: scale(10); opacity: 0; }
+        }
+
+        #page1 h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            font-weight: 500;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            background: #ff4081;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 64, 129, 0.3);
+            transition: transform 0.2s;
+            touch-action: manipulation;
+        }
+
+        #page2 h1 {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 300;
+        }
+
+        #page2 h1 span {
+            color: #4285F4;
+        }
+
+        #page2 p {
+            margin-top: 10px;
+            color: #888;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-style: italic;
+        }
+
+        #page3 h1 {
+            font-size: clamp(1.2rem, 6vw, 2rem);
+            line-height: 1.4;
+            padding: 0 10px;
+        }
+
+        #page4 h1 {
+            font-size: clamp(3rem, 12vw, 6rem);
+            font-weight: bold;
+            letter-spacing: 6px;
+        }
+
+        #page5 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.6s ease;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .text-box {
+            background: rgba(132, 149, 169, 0.92);
+            padding: 25px 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: absolute;
+            top: 75%;
+            left: 25%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            backdrop-filter: blur(4px);
+            touch-action: manipulation;
+        }
+
+        .text-box p {
+            color: #000000;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            line-height: 1.8;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        @media (orientation: landscape) {
+            .text-box {
+                top: 60%;
+                width: 60%;
+            }
+        }
+
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-overlay video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 新增：重播提示文字样式 */
+        #replayHint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            text-align: center;
+            pointer-events: none;
+            z-index: 102;
+            display: none;
+            width: 90%;
+            letter-spacing: 2px;
+        }
+
+        .btn,
+        .page,
+        .text-box {
+            touch-action: manipulation;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop preload="auto">
+        <source src="bgm.mp3" type="audio/mpeg" />
+    </audio>
+
+    <div class="page active" id="page1">
+        <h1 class="text-animate">Ready for a surprise? 🎁</h1>
+        <button class="btn text-animate" onclick="goToPage(2); playMusic();">Yes, Open It!</button>
+    </div>
+
+    <div class="page" id="page2" onclick="goToPage(3)">
+        <h1 class="text-animate">Hi <span>小熊</span></h1>
+    </div>
+
+    <div class="page" id="page3" onclick="goToPage(4)">
+        <h1 class="text-animate">I'm not much of a talker, so let's skip the clichés and just cut to the chase.!! :D</h1>
+    </div>
+
+    <div class="page" id="page4" onclick="goToPage(5)">
+        <h1 class="text-animate">Happy Birthday <span class="smiley">:)</span></h1>
+    </div>
+
+    <div class="page" id="page5">
+        <div class="text-box text-animate">
+            <p>Wish you joy every day<br />and endless movies to watch</p>
+        </div>
+    </div>
+
+    <div class="video-overlay" id="videoOverlay">
+        <video id="menuVideo"
+               playsinline
+               webkit-playsinline
+               preload="auto"
+               type="video/mp4"
+               controlsList="nodownload"
+               oncontextmenu="return false;"></video>
+        <div id="replayHint">单点可以再看一遍哦👉👈</div>
+    </div>
+
+    <script>
+        // 注意：这里默认播放你托管在 release 里的 video1.mp4，如果你想换成其他数字，修改下方第 225 行代码即可
+        const VIDEO_BASE_URL = './';
+        let currentPage = 1;
+        const totalPages = 5; // 总页数改为 5 页
+        const bgMusic = document.getElementById('bgMusic');
+        const videoOverlay = document.getElementById('videoOverlay');
+        const menuVideo = document.getElementById('menuVideo');
+        const replayHint = document.getElementById('replayHint');
+        let fadeInterval = null; // 全局渐变计时器
+        let isVideoEnded = false; // 标记视频是否播放结束
+
+        const bgImgList = [
+            "1.jpg",
+            "2.jpg",
+            "3.jpg"
+        ];
+        let imgIndex = 0;
+
+        // 停止当前正在进行的渐变
+        function clearFadeInterval() {
+            if (fadeInterval) {
+                clearInterval(fadeInterval);
+                fadeInterval = null;
+            }
+        }
+
+        // 背景音乐渐出（音量降到0后执行回调）
+        function fadeOutMusic(callback, stepTime = 100) {
+            if (!bgMusic) {
+                if (callback) callback();
+                return;
+            }
+            clearFadeInterval();
+            if (bgMusic.paused || bgMusic.volume === 0) {
+                if (callback) callback();
+                return;
+            }
+            let vol = bgMusic.volume;
+            fadeInterval = setInterval(() => {
+                vol = Math.max(0, vol - 0.05);
+                bgMusic.volume = vol;
+                if (vol <= 0) {
+                    clearFadeInterval();
+                    if (callback) callback();
+                }
+            }, stepTime);
+        }
+
+        // 背景音乐渐入（从当前音量逐渐增加到1）
+        function fadeInMusic(stepTime = 100) {
+            if (!bgMusic) return;
+            clearFadeInterval();
+            // 确保音乐正在播放
+            if (bgMusic.paused) {
+                bgMusic.volume = 0;
+                bgMusic.play().catch(() => {});
+            }
+            let vol = bgMusic.volume;
+            fadeInterval = setInterval(() => {
+                vol = Math.min(1, vol + 0.05);
+                bgMusic.volume = vol;
+                if (vol >= 1) {
+                    clearFadeInterval();
+                }
+            }, stepTime);
+        }
+
+        // ----- Confetti animation for page 4 -----
+        function createRandomCircle() {
+            const page4 = document.getElementById('page4');
+            const colors = ['#ff4081', '#4285F4', '#FFC107', '#4CAF50', '#9C27B0', '#FF5722', '#00BCD4', '#E91E63'];
+            let interval = setInterval(() => {
+                if (!document.getElementById('page4').classList.contains('active')) {
+                    return;
+                }
+                const circle = document.createElement('div');
+                circle.className = 'circle-dot';
+                let size = Math.random() * 20 + 10;
+                circle.style.width = size + 'px';
+                circle.style.height = size + 'px';
+                circle.style.left = Math.random() * 100 + '%';
+                circle.style.top = Math.random() * 100 + '%';
+                circle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                page4.appendChild(circle);
+                setTimeout(() => circle.remove(), 2000);
+            }, 300);
+            page4._circleInterval = interval;
+        }
+
+        // ----- Page navigation -----
+        function goToPage(pageNum) {
+            if (pageNum > totalPages) return;
+
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`page${pageNum}`);
+            target.classList.add('active');
+            currentPage = pageNum;
+
+            const animEls = target.querySelectorAll('.text-animate');
+            animEls.forEach(el => {
+                el.style.animation = 'none';
+                void el.offsetHeight;
+                el.style.animation = '';
+            });
+
+            if (pageNum === 4) {
+                if (document.getElementById('page4')._circleInterval) {
+                    clearInterval(document.getElementById('page4')._circleInterval);
+                }
+                createRandomCircle();
+            } else {
+                if (document.getElementById('page4')._circleInterval) {
+                    clearInterval(document.getElementById('page4')._circleInterval);
+                }
+            }
+
+            if (pageNum === 5) {
+                const p5 = document.getElementById('page5');
+                if (!p5.style.backgroundImage || p5.style.backgroundImage === 'none') {
+                    p5.style.backgroundImage = `url(${bgImgList[0]})`;
+                }
+            }
+        }
+
+        // ----- 音乐渐入播放（首次点击按钮时） -----
+        function playMusic() {
+            if (!bgMusic) return;
+            bgMusic.volume = 0;
+            bgMusic.play().then(() => {
+                fadeInMusic(); 
+            }).catch(e => {
+                console.log("Audio play requires user interaction");
+            });
+        }
+
+        // ----- 核心修改：直接播放主视频资源 -----
+        function playMainVideo() {
+            // 重置状态
+            isVideoEnded = false;
+            replayHint.style.display = 'none';
+
+            // 触发音频平滑渐出
+            fadeOutMusic(() => {
+                if (bgMusic) bgMusic.pause();
+
+                // 1. 将文件名改为 video.mp4
+                menuVideo.src = VIDEO_BASE_URL + 'video.mp4';
+
+                // 静音骗过自动播放拦截
+                menuVideo.muted = true;
+                videoOverlay.style.display = 'flex';
+
+                menuVideo.play().then(() => {
+                    // 2. 删除了原本自动取消静音的 setTimeout，防止被手机浏览器强行暂停
+                    console.log("静音播放成功，等待用户点击画面唤醒声音");
+                }).catch(err => {
+                    console.log("自动播放被拦截，等待用户点击:", err);
+                });
+            });
+        }
+
+        // ----- 核心修改：视频遮罩层点击逻辑（包含重播逻辑） -----
+        videoOverlay.addEventListener('click', function () {
+            if (isVideoEnded) {
+                // 如果处于播放结束状态，单击屏幕直接重新播放
+                playMainVideo();
+            } else {
+                // 正常的点击强行唤醒/解除静音
+                menuVideo.play();
+                if (menuVideo.muted) {
+                    menuVideo.muted = false;
+                }
+            }
+        });
+
+        // ----- 核心修改：视频播放完毕后的逻辑 -----
+        menuVideo.onended = function() {
+            isVideoEnded = true;
+            menuVideo.src = ""; // 清空资源保持黑色背景
+            
+            // 显示中间的温情提示语
+            replayHint.style.display = 'block';
+            
+            // 视频结束后，平滑渐入背景音乐陪伴用户
+            fadeInMusic();
+        };
+
+        // ----- 第五页点击切换背景图片（避开文本框） -----
+        document.getElementById('page5').addEventListener('click', function (e) {
+            if (e.target.closest('.text-box')) return;
+            imgIndex = (imgIndex + 1) % bgImgList.length;
+            this.style.backgroundImage = `url(${bgImgList[imgIndex]})`;
+        });
+
+        // ----- 手机端从第五页左划直接触发视频 -----
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const page5 = document.getElementById('page5');
+        page5.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        page5.addEventListener('touchend', function(e) {
+            if (!page5.classList.contains('active')) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            // 判定为左划，直接播放视频
+            if (Math.abs(dx) > Math.abs(dy) && dx < -50) {
+                playMainVideo();
+            }
+        });
+
+        // ----- 电脑端双指上划从第五页直接触发视频 -----
+        page5.addEventListener('wheel', function(e) {
+            if (!page5.classList.contains('active')) return;
+            if (e.deltaY > 50) {
+                e.preventDefault();
+                playMainVideo();
+            }
+        }, { passive: false });
+
+        // ----- 全局点击恢复音乐（非视频状态） -----
+        document.addEventListener('click', function () {
+            if (bgMusic && bgMusic.paused && videoOverlay.style.display !== 'flex') {
+                bgMusic.play().then(() => {
+                    fadeInMusic();
+                }).catch(() => {});
+            }
+        }, { once: false });
+
+        // ----- 预加载第一张背景图 -----
+        const preloadImg = new Image();
+        preloadImg.src = bgImgList[0];
+        preloadImg.onload = function () {
+            if (document.getElementById('page5').classList.contains('active')) {
+                document.getElementById('page5').style.backgroundImage = `url(${bgImgList[0]})`;
+            }
+        };
+
+        window.addEventListener('load', function () {
+            if (document.getElementById('page5').classList.contains('active')) {
+                document.getElementById('page5').style.backgroundImage = `url(${bgImgList[0]})`;
+            }
+        });
+
+        // 维持主视频的预加载
+        window.addEventListener('load', () => {
+            let preload = document.createElement('video');
+            // 将预加载的文件名改为 video.mp4
+            preload.src = VIDEO_BASE_URL + 'video.mp4';
+            preload.muted = true;
+            preload.preload = 'auto';
+            preload.load();
+        });
+
+        console.log('🎂 Happy Birthday! ~');
+    </script>
+
+</body>
+</html>
